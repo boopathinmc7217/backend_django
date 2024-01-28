@@ -14,6 +14,8 @@ from django.utils import timezone
 from django.contrib.sessions.models import Session
 
 ACCESS_COURSE = False
+
+
 class CsrfExemptMixin(object):
     @method_decorator(csrf_exempt)
     def dispatch(self, *args, **kwargs):
@@ -32,7 +34,8 @@ class StudentsDetailView(RetrieveAPIView):
     def get_object(self):
         # Retrieve the Students object for the authenticated user
         return Students.objects.get(user=self.request.user)
-        
+
+
 @method_decorator(csrf_exempt, name="dispatch")
 class LoginView(APIView):
     authentication_classes = [CsrfExemptSessionAuthentication]
@@ -122,4 +125,3 @@ class LoginView(APIView):
     def delete_active_sessions(self, ses_key):
         active_session = Session.objects.filter(session_key=ses_key)
         active_session.delete()
-

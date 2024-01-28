@@ -133,11 +133,11 @@ SESSION_COOKIE_AGE = 60 * 60 * 24
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
 SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'SCOPE': ['profile', 'email'],
-        'AUTH_PARAMS': {
-            'access_type': 'online',
-            'redirect_uri': 'http://localhost:8000/api/v1/students/'
-        }
+    "google": {
+        "SCOPE": ["profile", "email"],
+        "AUTH_PARAMS": {
+            "access_type": "online",
+            "redirect_uri": "http://localhost:8000/api/v1/students/",
+        },
     }
 }

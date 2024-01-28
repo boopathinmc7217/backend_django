@@ -1,9 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
-from django.db import models
-from django.contrib.auth.models import User
-from django.utils import timezone
 
 
 class Students(models.Model):
@@ -18,15 +15,6 @@ class Students(models.Model):
 class Videos(models.Model):
     video_week = models.IntegerField()
     link = models.URLField()
-
-
-from django.db import models
-from django.utils import timezone
-
-
-from django.db import models
-from django.contrib.auth.models import User
-from django.utils import timezone
 
 
 class UserSession(models.Model):
