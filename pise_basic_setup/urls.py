@@ -1,5 +1,5 @@
 from django.urls import path
-from pise_basic_setup.api_views import StudentsDetailView, LoginView, HelloWorldView
+from pise_basic_setup.api_views import StudentsDetailView, LoginView
 from django.urls import path
 
 
