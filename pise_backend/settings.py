@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/5.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
+#
 
 from pathlib import Path
 
@@ -26,7 +27,6 @@ SECRET_KEY = "django-insecure-w-e=+7u0m@wd*k1ifk6j7k%l9bhg2do=g9anri96f*9jemi5or
 DEBUG = True
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
-
 
 # Application definition
 
@@ -141,3 +141,16 @@ SOCIALACCOUNT_PROVIDERS = {
         },
     }
 }
+
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'boopathirajasekaran@gmail.com'
+EMAIL_HOST_PASSWORD = 'sazp cjny mxbf fxqm'
+
+

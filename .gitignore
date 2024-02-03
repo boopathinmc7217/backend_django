@@ -1,2 +1,6 @@
 /pise
 /drive_actions.py
+**/*.pyc
+**/__pycache__
+**/directed*
+**/postman.txt
