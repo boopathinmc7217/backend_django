@@ -1,4 +1,4 @@
-from django.urls import URLPattern, path
+from django.urls import path
 from pise_basic_setup.api_views import (
     CousreView,
     Specifictopic,
@@ -12,7 +12,7 @@ from pise_basic_setup.api_views import (
 from pise_basic_setup.views import video_link
 
 
-urlpatterns: list[URLPattern] = [
+urlpatterns = [
     path("api/v1/students/", StudentsDetailView.as_view(), name="student_list"),
     path("api/v1/login/", LoginView.as_view(), name="login_page"),
     path("api/v1/course/", CousreView.as_view(), name="course"),
