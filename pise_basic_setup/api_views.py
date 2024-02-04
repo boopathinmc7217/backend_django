@@ -169,7 +169,6 @@ class Specifictopic(ListAPIView):
 
     def list(self, request, *args, **kwargs):
         queryset, subject = self.get_queryset()
-        breakpoint()
         data = {subject: list(queryset)}
         return JsonResponse(data, safe=False)
 
