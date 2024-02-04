@@ -1,4 +1,5 @@
 from django.contrib.auth.views import PasswordResetCompleteView
+from django.http import JsonResponse
 from rest_framework.generics import RetrieveAPIView, ListAPIView
 from django.contrib.auth import authenticate, login as django_login
 from rest_framework import status
@@ -22,9 +23,12 @@ from django.urls import reverse
 from django.contrib.auth.views import PasswordResetConfirmView
 from django.contrib.auth.forms import SetPasswordForm
 from django.urls import reverse_lazy
+
 ACCESS_COURSE = False
 from rest_framework.decorators import authentication_classes, permission_classes
 from django.contrib.auth.models import User
+
+
 class CsrfExemptMixin(object):
     @method_decorator(csrf_exempt)
     def dispatch(self, *args, **kwargs):
@@ -58,8 +62,7 @@ class LoginView(APIView):
         if user is not None and user.is_active:
             # Perform login and check student details
             django_login(request, user)
-            session_killed = self.update_activity(
-                user, request.session.session_key)
+            session_killed = self.update_activity(user, request.session.session_key)
             return self.handle_student_details(user, sessions_killed=session_killed)
         else:
             return Response(
@@ -97,7 +100,7 @@ class LoginView(APIView):
                     {"error": "Account expired"},
                     status=status.HTTP_401_UNAUTHORIZED,
                 )
-        except :
+        except:
             return Response(
                 {"error": "Validation failed. Student record not found."},
                 status=status.HTTP_401_UNAUTHORIZED,
@@ -142,7 +145,34 @@ class CousreView(ListAPIView):
     serializer_class = VideoSerializer
 
     def get_queryset(self):
-        return Videos.objects.all()
+        subjects = Videos.objects.values_list("subject", flat=True).distinct()
+        return subjects
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        data = {"subjects": list(queryset)}
+        return JsonResponse(data, safe=False)
+
+
+class Specifictopic(ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = VideoSerializer
+
+    def get_queryset(self):
+        subject = self.request.data.get("subject")
+        topics_availables = (
+            Videos.objects.filter(subject=subject)
+            .values_list("topic", "video_file")
+            .distinct()
+        )
+        return topics_availables, subject
+
+    def list(self, request, *args, **kwargs):
+        queryset, subject = self.get_queryset()
+        breakpoint()
+        data = {subject: list(queryset)}
+        return JsonResponse(data, safe=False)
+
 
 @method_decorator(csrf_exempt, name="dispatch")
 class ResetPassAPIView(APIView):
@@ -157,18 +187,23 @@ class ResetPassAPIView(APIView):
         if username:
             student = get_object_or_404(Students, user_name=username)
             email = student.email
-            return Response({'email': email})
+            return Response({"email": email})
 
         elif given_email:
             try:
                 student = Students.objects.get(email=given_email)
                 email = student.email
-                return Response({'email': email})
+                return Response({"email": email})
             except:
-                return Response({'error': 'Student not found for the given email'}, status=status.HTTP_404_NOT_FOUND)
+                return Response(
+                    {"error": "Student not found for the given email"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
 
-        return Response({'error': 'Username or email not provided'}, status=status.HTTP_400_BAD_REQUEST)
-
+        return Response(
+            {"error": "Username or email not provided"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
 
 @authentication_classes([CsrfExemptSessionAuthentication])
@@ -181,36 +216,44 @@ class PasswordResetView(APIView):
         if username:
             try:
                 student = get_object_or_404(User, username=username)
-            except :
-                return Response({'error': 'User not found for the given username'}, status=status.HTTP_404_NOT_FOUND)
+            except:
+                return Response(
+                    {"error": "User not found for the given username"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
 
         elif given_email:
             try:
-                student = get_object_or_404(User,email=given_email)
-            except :
-                return Response({'error': 'User not found for the given email'}, status=status.HTTP_404_NOT_FOUND)
+                student = get_object_or_404(User, email=given_email)
+            except:
+                return Response(
+                    {"error": "User not found for the given email"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
         email = student.email
         user = student
         token = default_token_generator.make_token(user)
         token_data = urlsafe_base64_encode(force_bytes(user.pk))
 
-        reset_url = reverse('password_reset_confirm', args=[token_data, token])
+        reset_url = reverse("password_reset_confirm", args=[token_data, token])
         reset_url = request.build_absolute_uri(reset_url)
 
         send_mail(
-            'Password Reset',
-            f'Click the following link to reset your password: {reset_url}',
-            'from@example.com',
+            "Password Reset",
+            f"Click the following link to reset your password: {reset_url}",
+            "from@example.com",
             [email],
             fail_silently=False,
         )
 
-        return Response({'message': 'Password reset email sent'})
+        return Response({"message": "Password reset email sent"})
+
 
 class CustomPasswordResetConfirmView(PasswordResetConfirmView):
-    template_name = 'password_reset_confirm.html'
-    success_url = reverse_lazy('password_reset_complete')
+    template_name = "password_reset_confirm.html"
+    success_url = reverse_lazy("password_reset_complete")
     form_class = SetPasswordForm
 
+
 class CustomPasswordResetCompleteView(PasswordResetCompleteView):
-    template_name = 'password_reset_complete.html'
+    template_name = "password_reset_complete.html"

@@ -5,7 +5,9 @@ from django.utils import timezone
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
-User._meta.get_field('email').blank = False
+
+User._meta.get_field("email").blank = False
+
 
 class Students(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -17,6 +19,7 @@ class Students(models.Model):
     test_batch = models.BooleanField(default=False)
     valid_till = models.DateField()
 
+
 # class Exams(models.Model):
 #     student = models.ForeignKey(Students, on_delete=models.CASCADE)
 #     group_1 = models.BooleanField()
@@ -25,16 +28,16 @@ class Students(models.Model):
 #     group_4 = models.BooleanField()
 #     test_batch = models.BooleanField()
 
+
 class Videos(models.Model):
     subject = models.CharField(max_length=50)
     topic = models.CharField(max_length=50)
-    video_file = models.FileField(upload_to='videos/')
+    video_file = models.FileField(upload_to="videos/")
+
 
 class UserSession(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    session_key = models.CharField(
-        max_length=40, unique=True
-    )
+    session_key = models.CharField(max_length=40, unique=True)
     last_activity = models.DateTimeField(default=timezone.now)
     session_expiry = models.DateTimeField(blank=True)
 
@@ -47,6 +50,3 @@ class PasswordResetToken(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     token = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
-
-
-

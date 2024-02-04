@@ -2,11 +2,12 @@ import datetime
 import json
 import os
 from pathlib import Path
+
 script_directory = os.path.dirname(os.path.realpath(__file__))
 json_file_name = "directed-radius-409718-d0d03a8a1400.json"
-os.environ[
-    "GOOGLE_APPLICATION_CREDENTIALS"
-] =  os.path.join(script_directory, json_file_name)
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(
+    script_directory, json_file_name
+)
 from google.cloud import storage
 
 CILENT = storage.Client()
@@ -31,7 +32,9 @@ class StoreGcp:
 
     def upload_data(self):
         bucket = self.client.get_bucket(self.bucket_name)
-        media_dir = os.path.join(Path(os.path.dirname(os.path.abspath(__file__))).parent,"media")
+        media_dir = os.path.join(
+            Path(os.path.dirname(os.path.abspath(__file__))).parent, "media"
+        )
         source_file_path = os.path.join(media_dir, self.source_file_name)
         print(self.source_file_name)
         blob = bucket.blob(self.source_file_name)

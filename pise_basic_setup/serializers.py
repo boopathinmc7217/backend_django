@@ -19,7 +19,6 @@ class StudentsSerializer(serializers.ModelSerializer):
 
 
 class VideoSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Videos
-        fields = ["subject", "topic"]
+        fields = ["subject", "topic", "video_file"]
