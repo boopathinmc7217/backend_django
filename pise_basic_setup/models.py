@@ -5,6 +5,7 @@ from django.utils import timezone
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
+from django.contrib.sessions.models import Session
 
 User._meta.get_field("email").blank = False
 
@@ -37,7 +38,7 @@ class Videos(models.Model):
 
 class UserSession(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    session_key = models.CharField(max_length=40, unique=True)
+    session_key = models.ForeignKey(Session, on_delete=models.CASCADE)
     last_activity = models.DateTimeField(default=timezone.now)
     session_expiry = models.DateTimeField(blank=True)
 

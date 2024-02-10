@@ -1,4 +1,5 @@
 from django.contrib.auth.views import PasswordResetCompleteView
+from django.dispatch import receiver
 from django.http import JsonResponse
 from rest_framework.generics import RetrieveAPIView, ListAPIView
 from django.contrib.auth import authenticate, login as django_login
@@ -27,6 +28,11 @@ from django.urls import reverse_lazy
 ACCESS_COURSE = False
 from rest_framework.decorators import authentication_classes, permission_classes
 from django.contrib.auth.models import User
+from rest_framework_jwt.settings import api_settings
+from rest_framework_jwt.authentication import JSONWebTokenAuthentication
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.signals import user_logged_in
+from django.db.models import Q
 
 
 class CsrfExemptMixin(object):
@@ -34,19 +40,27 @@ class CsrfExemptMixin(object):
     def dispatch(self, *args, **kwargs):
         return super(CsrfExemptMixin, self).dispatch(*args, **kwargs)
 
+@receiver(user_logged_in)
+def on_user_logged_in(sender, request, **kwargs):
+    Session.objects.filter(Q(session_key=request.session.session_key) == False, Q(usersession__user=request.user)).delete()
+    old_sessions = Session.objects.filter(usersession__user=request.user)
+    for session in old_sessions:
+        if 'jwt' in session.get_decoded():
+            del session.get_decoded()['jwt']  # Invalidate the old session
+        session.save()
 
 class CsrfExemptSessionAuthentication(SessionAuthentication):
     def enforce_csrf(self, request):
         return
 
-
 class StudentsDetailView(RetrieveAPIView):
     serializer_class = StudentsSerializer
     permission_classes = [IsAuthenticated]
+    authentication_classes = [JSONWebTokenAuthentication]
 
     def get_object(self):
         # Retrieve the Students object for the authenticated user
-        return Students.objects.get(user=self.request.user)
+        return get_object_or_404(Students, user=self.request.user)
 
 
 @method_decorator(csrf_exempt, name="dispatch")
@@ -61,9 +75,18 @@ class LoginView(APIView):
         user = authenticate(username=username, password=password)
         if user is not None and user.is_active:
             # Perform login and check student details
+            jwt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
+            jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+            wt_payload_handler = api_settings.JWT_PAYLOAD_HANDLER
+            jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
+            payload = jwt_payload_handler(user)
+            token = jwt_encode_handler(payload)
+            request.session['jwt'] = token  # Store the token in the session
+            UserSession.objects.get_or_create(user=user, session_id=request.session.session_key)
             django_login(request, user)
             session_killed = self.update_activity(user, request.session.session_key)
-            return self.handle_student_details(user, sessions_killed=session_killed)
+            response = self.handle_student_details(user, sessions_killed=session_killed)
+            return response
         else:
             return Response(
                 {"error": "Invalid username/password or user is inactive."},
