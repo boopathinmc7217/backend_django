@@ -82,7 +82,7 @@ class LoginView(APIView):
             payload = jwt_payload_handler(user)
             token = jwt_encode_handler(payload)
             request.session['jwt'] = token  # Store the token in the session
-            UserSession.objects.get_or_create(user=user, session_id=request.session.session_key)
+            UserSession.objects.get_or_create(user=user, session_key_id=request.session.session_key)
             django_login(request, user)
             session_killed = self.update_activity(user, request.session.session_key)
             response = self.handle_student_details(user, sessions_killed=session_killed)
