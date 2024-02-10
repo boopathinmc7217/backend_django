@@ -29,7 +29,7 @@ ACCESS_COURSE = False
 from rest_framework.decorators import authentication_classes, permission_classes
 from django.contrib.auth.models import User
 from rest_framework_jwt.settings import api_settings
-from rest_framework_jwt.authentication import JSONWebTokenAuthentication
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.signals import user_logged_in
 from django.db.models import Q
@@ -56,7 +56,7 @@ class CsrfExemptSessionAuthentication(SessionAuthentication):
 class StudentsDetailView(RetrieveAPIView):
     serializer_class = StudentsSerializer
     permission_classes = [IsAuthenticated]
-    authentication_classes = [JSONWebTokenAuthentication]
+    authentication_classes = [JWTAuthentication]
 
     def get_object(self):
         # Retrieve the Students object for the authenticated user
