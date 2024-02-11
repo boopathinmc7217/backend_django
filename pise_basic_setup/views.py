@@ -11,4 +11,4 @@ def video_link(request) -> str:
         source_file_name=source_file_name, file_type=file_type_video
     )
     result = store_gcp_instance.get_signed_url()
-    return JsonResponse({'status': 'success', 'video_url': result})
+    return JsonResponse({"status": "success", "video_url": result})

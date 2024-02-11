@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from .models import Students, Videos
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -15,16 +16,27 @@ class StudentsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Students
-        fields = ["user", "payment_status", "valid_till", "group_1", "group_2", "group_3", "group_4", "test_batch"]
+        fields = [
+            "user",
+            "payment_status",
+            "valid_till",
+            "group_1",
+            "group_2",
+            "group_3",
+            "group_4",
+            "test_batch",
+        ]
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         return {key: value for key, value in representation.items() if value}
 
+
 class VideoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Videos
         fields = ["subject", "topic", "video_file"]
+
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod

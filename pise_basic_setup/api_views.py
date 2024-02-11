@@ -7,7 +7,11 @@ from django.contrib.auth import authenticate, login as django_login
 from rest_framework import status
 from rest_framework.views import APIView
 from pise_basic_setup.models import Students, UserSession, Videos
-from pise_basic_setup.serializers import StudentsSerializer, VideoSerializer, MyTokenObtainPairSerializer
+from pise_basic_setup.serializers import (
+    StudentsSerializer,
+    VideoSerializer,
+    MyTokenObtainPairSerializer,
+)
 from rest_framework.response import Response
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.authentication import SessionAuthentication
@@ -36,31 +40,34 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 
-
-
-
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
+
 
 class CsrfExemptMixin(object):
     @method_decorator(csrf_exempt)
     def dispatch(self, *args, **kwargs):
         return super(CsrfExemptMixin, self).dispatch(*args, **kwargs)
 
+
 @receiver(user_logged_in)
 def on_user_logged_in(sender, request, **kwargs):
-    Session.objects.exclude(session_key=request.session.session_key).filter(usersession__user=request.user).delete()
+    Session.objects.exclude(session_key=request.session.session_key).filter(
+        usersession__user=request.user
+    ).delete()
     old_sessions = Session.objects.filter(usersession__user=request.user)
     for session in old_sessions:
         data = session.get_decoded()
-        if 'jwt' in data:
-            del data['jwt']  # Invalidate the old session
+        if "jwt" in data:
+            del data["jwt"]  # Invalidate the old session
             session.session_data = Session.objects.encode(data)
             session.save()
+
 
 class CsrfExemptSessionAuthentication(SessionAuthentication):
     def enforce_csrf(self, request):
         return
+
 
 class StudentsDetailView(RetrieveAPIView):
     serializer_class = StudentsSerializer
@@ -89,20 +96,20 @@ class LoginView(APIView):
             jwt_encode_handler = api_settings.JWT_ENCODE_HANDLER
             payload = jwt_payload_handler(user)
             token = jwt_encode_handler(payload)
-            request.session['jwt'] = token  # Store the token in the session
+            request.session["jwt"] = token  # Store the token in the session
             session = Session.objects.get(session_key=request.session.session_key)
             UserSession.objects.get_or_create(user=user, session_key=session)
             self.update_activity(user, session)
             response = self.handle_student_details(user, request)
             return response
-        
+
         else:
             return Response(
                 {"error": "Invalid username/password or user is inactive."},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
-    def handle_student_details(self, user,req):
+    def handle_student_details(self, user, req):
         try:
             student_details = Students.objects.get(user=user.id)
             if student_details.valid_till >= timezone.localdate():
@@ -114,8 +121,8 @@ class LoginView(APIView):
 
                 token_view = MyTokenObtainPairView.as_view()(req._request)
                 token_view.data["logged_in"] = True
-                token_view.data["user_name"]= user.username
-                token_view.data["validity_expires"] =  str(validity_expires)
+                token_view.data["user_name"] = user.username
+                token_view.data["validity_expires"] = str(validity_expires)
                 response = Response(token_view.data, status=status.HTTP_200_OK)
                 self.set_cookie(response, "refresh_token", str(refresh))
                 self.set_cookie(response, "access_token", str(refresh.access_token))
@@ -198,10 +205,11 @@ class LoginView(APIView):
             secure=True,
             httponly=True,
             samesite="Strict",
-            max_age= 24*60*60,
+            max_age=24 * 60 * 60,
         )
-        
+
         return response
+
 
 class CousreView(ListAPIView):
     """
@@ -217,6 +225,7 @@ class CousreView(ListAPIView):
         get_queryset(): Retrieves a distinct list of subjects from the Videos model.
         list(): Overrides the default list method to return a JsonResponse with the list of subjects.
     """
+
     permission_classes = [IsAuthenticated]
     serializer_class = VideoSerializer
 
@@ -333,11 +342,13 @@ class CustomPasswordResetConfirmView(PasswordResetConfirmView):
 class CustomPasswordResetCompleteView(PasswordResetCompleteView):
     template_name = "password_reset_complete.html"
 
+
 from rest_framework_simplejwt.views import TokenRefreshView
+
 
 class CustomTokenRefreshView(TokenRefreshView):
     def post(self, request, *args, **kwargs):
-        cookie = request.COOKIES.get('refresh_token')
+        cookie = request.COOKIES.get("refresh_token")
         # breakpoint()
         # if cookie:
         #     request.data.copy().update({'refresh': cookie})
