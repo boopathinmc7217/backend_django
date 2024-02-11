@@ -1,6 +1,7 @@
 from django.urls import path
 from pise_basic_setup.api_views import (
     CousreView,
+    CustomTokenRefreshView,
     Specifictopic,
     StudentsDetailView,
     LoginView,
@@ -30,4 +31,5 @@ urlpatterns = [
     ),
     path("api/v1/specsvideo/", Specifictopic.as_view(), name="specific_topic_videos"),
     path("api/v1/getvideo/", video_link, name="specific_topic_videos"),
+    path('api/v1/token/refresh/', CustomTokenRefreshView.as_view(), name='token_refresh'),
 ]
