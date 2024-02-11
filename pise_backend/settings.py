@@ -74,7 +74,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "pise_backend.wsgi.application"
-
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 1024 * 10 
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
