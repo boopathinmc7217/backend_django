@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 
 script_directory = os.path.dirname(os.path.realpath(__file__))
-json_file_name = "directed-radius-409718-d0d03a8a1400.json"
+json_file_name = "<file_name>.json"
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.join(
     script_directory, json_file_name
 )

@@ -53,6 +53,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "pise_basic_setup.middleware.SetCSRFCookieMiddleware",
 ]
 
 ROOT_URLCONF = "pise_backend.urls"
@@ -74,8 +75,8 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "pise_backend.wsgi.application"
-DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 1024 * 10 
-
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 1024 * 10  # 10GB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 1024 * 10  # 10GB
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
@@ -158,9 +159,9 @@ EMAIL_HOST_PASSWORD = "sazp cjny mxbf fxqm"
 
 CORS_ALLOW_ALL_ORIGINS = True
 # CORS settings
-# CORS_ALLOWED_ORIGINS = ["http://localhost:3000"]  # Replace with your frontend domain
-# CORS_ALLOW_CREDENTIALS = True
-# CORS_EXPOSE_HEADERS = ["Content-Type", "X-CSRFToken"]
+CORS_ALLOWED_ORIGINS = ["http://*"]  # Replace with your frontend domain
+CORS_ALLOW_CREDENTIALS = True
+CORS_EXPOSE_HEADERS = ["Content-Type", "X-CSRFToken"]
 
 # # CSRF settings
 # CSRF_COOKIE_SECURE = True
@@ -171,10 +172,10 @@ CORS_ALLOW_ALL_ORIGINS = True
 # # Session settings
 # SESSION_COOKIE_SECURE = True
 # SESSION_COOKIE_SAMESITE = "None"
-SECURE_SSL_REDIRECT         = True
-SESSION_COOKIE_SECURE       = True
-CSRF_COOKIE_SECURE          = True
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# SECURE_SSL_REDIRECT         = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # JWT settings
 SIMPLE_JWT = {
@@ -219,4 +220,25 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.BasicAuthentication",
     ),
+}
+
+# settings.py
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "file": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "filename": BASE_DIR / "django.log",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["file"],
+            "level": "DEBUG",
+            "propagate": True,
+        },
+    },
 }

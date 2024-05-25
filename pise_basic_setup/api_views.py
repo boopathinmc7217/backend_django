@@ -1,7 +1,7 @@
 import re
 from django.contrib.auth.views import PasswordResetCompleteView
 from django.dispatch import receiver
-from django.http import JsonResponse
+from django.http import HttpRequest, JsonResponse
 from rest_framework.generics import RetrieveAPIView, ListAPIView
 from django.contrib.auth import authenticate, login as django_login
 from rest_framework import status
@@ -29,6 +29,8 @@ from django.urls import reverse
 from django.contrib.auth.views import PasswordResetConfirmView
 from django.contrib.auth.forms import SetPasswordForm
 from django.urls import reverse_lazy
+from django.middleware.csrf import get_token
+from rest_framework_simplejwt.views import TokenRefreshView, TokenBlacklistView
 
 ACCESS_COURSE = False
 from rest_framework.decorators import authentication_classes, permission_classes
@@ -42,6 +44,10 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
+
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        return response
 
 
 class CsrfExemptMixin(object):
@@ -85,6 +91,7 @@ class LoginView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request, format=None):
+        body = request.body
         data = request.data
         username = data.get("username", None)
         password = data.get("password", None)
@@ -98,11 +105,15 @@ class LoginView(APIView):
             token = jwt_encode_handler(payload)
             request.session["jwt"] = token  # Store the token in the session
             session = Session.objects.get(session_key=request.session.session_key)
-            UserSession.objects.get_or_create(user=user, session_key=session)
             self.update_activity(user, session)
-            response = self.handle_student_details(user, request)
+            UserSession.objects.get_or_create(user=user, session_key=session)
+            response_data = self.handle_student_details(user, request)
+            response = Response(data=response_data, status=status.HTTP_200_OK)
+            self.set_cookie(response, "refresh_token", str(response_data["refresh"]))
+            self.set_cookie(
+                response, "access_token", str(response_data["access_token"])
+            )
             return response
-
         else:
             return Response(
                 {"error": "Invalid username/password or user is inactive."},
@@ -118,15 +129,23 @@ class LoginView(APIView):
                 validity_expires = student_details.valid_till - timezone.localdate()
                 if validity_expires.days == 0:
                     validity_expires = "Today"
-
-                token_view = MyTokenObtainPairView.as_view()(req._request)
+                """token_obtain_pair_view = MyTokenObtainPairView()
+                token_obtain_pair_view_func = token_obtain_pair_view.as_view()
+                token_view = token_obtain_pair_view_func(req._request)
                 token_view.data["logged_in"] = True
                 token_view.data["user_name"] = user.username
                 token_view.data["validity_expires"] = str(validity_expires)
-                response = Response(token_view.data, status=status.HTTP_200_OK)
-                self.set_cookie(response, "refresh_token", str(refresh))
+                response = Response(token_view.data, status=status.HTTP_200_OK)"""
+                """self.set_cookie(response, "refresh_token", str(refresh))
                 self.set_cookie(response, "access_token", str(refresh.access_token))
-                return response
+                return response"""
+                return {
+                    "logged_in": True,
+                    "user_name": user.username,
+                    "validity_expires": str(validity_expires),
+                    "refresh": str(refresh),
+                    "access_token": str(refresh.access_token),
+                }
             else:
                 return Response(
                     {"error": "Account expired"},
@@ -226,14 +245,16 @@ class CousreView(ListAPIView):
         list(): Overrides the default list method to return a JsonResponse with the list of subjects.
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes: list[type[IsAuthenticated]] = [IsAuthenticated]
     serializer_class = VideoSerializer
 
-    def get_queryset(self):
-        subjects = Videos.objects.values_list("subject", flat=True).distinct()
+    def get_queryset(self) -> ValuesQuerySet[Videos, Any]:
+        subjects: ValuesQuerySet[Videos, Any] = Videos.objects.values_list(
+            "subject", flat=True
+        ).distinct()
         return subjects
 
-    def list(self, request, *args, **kwargs):
+    def list(self, request, *args, **kwargs) -> JsonResponse:
         queryset = self.get_queryset()
         data = {"subjects": list(queryset)}
         return JsonResponse(data, safe=False)
@@ -325,7 +346,7 @@ class PasswordResetView(APIView):
         send_mail(
             "Password Reset",
             f"Click the following link to reset your password: {reset_url}",
-            "from@example.com",
+            "<valid_email>",
             [email],
             fail_silently=False,
         )
@@ -343,14 +364,7 @@ class CustomPasswordResetCompleteView(PasswordResetCompleteView):
     template_name = "password_reset_complete.html"
 
 
-from rest_framework_simplejwt.views import TokenRefreshView
-
-
 class CustomTokenRefreshView(TokenRefreshView):
     def post(self, request, *args, **kwargs):
         cookie = request.COOKIES.get("refresh_token")
-        # breakpoint()
-        # if cookie:
-        #     request.data.copy().update({'refresh': cookie})
-        # breakpoint()
         return super().post(request, *args, **kwargs)
